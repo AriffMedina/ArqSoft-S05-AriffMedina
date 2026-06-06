@@ -1,0 +1,135 @@
+﻿/* ─── Encabezado de sección ───────────────────────── */
+h1 {
+    font-size: 1.55rem;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: -0.3px;
+    margin-bottom: 1.6rem;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--blue);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    h1::before {
+        content: '📅';
+        font-size: 1.2rem;
+    }
+
+/* ─── Tabla ───────────────────────────────────────── */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--white);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--divider);
+    font-size: 0.9rem;
+}
+
+    table th {
+        background: var(--navy);
+        color: rgba(255,255,255,0.7);
+        font-size: 0.72rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 13px 20px;
+        border: none;
+        text-align: left;
+    }
+
+    table td {
+        padding: 13px 20px;
+        border: none;
+        border-bottom: 1px solid var(--divider-soft);
+        color: var(--ink);
+        vertical-align: middle;
+        transition: background var(--t) var(--ease);
+    }
+
+    table tr:last-child td {
+        border-bottom: none;
+    }
+
+    table tbody tr:hover td {
+        background: var(--blue-pale);
+    }
+
+    /* ─── Columna Fecha y Hora ────────────────────────── */
+    table th:nth-child(1),
+    table td:nth-child(1) {
+        width: 110px;
+    }
+
+    table th:nth-child(2),
+    table td:nth-child(2) {
+        width: 80px;
+        font-family: 'DM Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--slate);
+    }
+
+    /* ─── Badge de estado ─────────────────────────────── */
+    table td:last-child {
+        width: 130px;
+    }
+
+    table td:last-child {
+        padding-right: 20px;
+    }
+
+    /* Estado como badge — aplicado vía wrapper genérico */
+    table th:last-child + * td:last-child,
+    table td:last-child {
+        text-align: left;
+    }
+
+    /* Selector para la última celda de cada fila */
+    table tbody tr td:last-child {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Badge visual usando ::before como píldora de color */
+    table tbody td:last-child {
+        position: relative;
+        padding-left: 20px;
+    }
+
+        table tbody td:last-child::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--blue);
+            margin-right: 8px;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+            flex-shrink: 0;
+        }
+
+/* ─── Link volver ─────────────────────────────────── */
+a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--slate);
+    text-decoration: none;
+    transition: color var(--t) var(--ease);
+}
+
+    a:hover {
+        color: var(--blue);
+        text-decoration: none;
+    }

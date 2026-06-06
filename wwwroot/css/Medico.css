@@ -1,0 +1,137 @@
+﻿/* ─── Encabezado de sección ───────────────────────── */
+h1 {
+    font-size: 1.55rem;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: -0.3px;
+    margin-bottom: 1.6rem;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--blue);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    h1::before {
+        content: '🩺';
+        font-size: 1.25rem;
+    }
+
+/* ─── Tabla ───────────────────────────────────────── */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--white);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--divider);
+    font-size: 0.9rem;
+}
+
+    table th {
+        background: var(--navy);
+        color: rgba(255,255,255,0.7);
+        font-size: 0.72rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 13px 20px;
+        border: none;
+        text-align: left;
+    }
+
+        table th:first-child {
+            border-radius: 0;
+        }
+
+    table td {
+        padding: 13px 20px;
+        border: none;
+        border-bottom: 1px solid var(--divider-soft);
+        color: var(--ink);
+        vertical-align: middle;
+        transition: background var(--t) var(--ease);
+    }
+
+    table tr:last-child td {
+        border-bottom: none;
+    }
+
+    table tbody tr:hover td {
+        background: var(--blue-pale);
+    }
+
+    /* ─── Link "Ver detalle" dentro de tabla ──────────── */
+    table td:last-child {
+        width: 120px;
+    }
+
+    table td a {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--blue);
+        text-decoration: none;
+        padding: 5px 13px;
+        border: 1px solid var(--blue-mist);
+        border-radius: 20px;
+        background: var(--blue-pale);
+        transition: background var(--t) var(--ease), color var(--t) var(--ease), border-color var(--t) var(--ease);
+        letter-spacing: 0.1px;
+    }
+
+        table td a:hover {
+            background: var(--blue);
+            color: #fff;
+            border-color: var(--blue);
+        }
+
+/* ─── Detalle ─────────────────────────────────────── */
+h1 + p,
+h1 ~ p {
+    font-size: 0.95rem;
+    color: var(--ink);
+    margin-bottom: 10px;
+    padding: 0;
+}
+
+    h1 ~ p strong {
+        color: var(--navy-mid);
+        font-weight: 600;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+/* ─── Link volver ─────────────────────────────────── */
+a[href] {
+    color: var(--blue);
+    text-decoration: none;
+}
+
+    a[href]:hover {
+        text-decoration: underline;
+    }
+
+a[asp-action="Index"],
+a[href*="Medico"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--slate);
+    margin-top: 8px;
+    text-decoration: none;
+    transition: color var(--t);
+}
+
+    a[asp-action="Index"]:hover,
+    a[href*="Medico"]:hover {
+        color: var(--blue);
+        text-decoration: none;
+    }
