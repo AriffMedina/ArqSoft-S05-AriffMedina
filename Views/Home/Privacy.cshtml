@@ -1,6 +1,125 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Política de Privacidad";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/Home.css" asp-append-version="true" />
+}
+
+<div class="page-header fade-up">
+    <div>
+        <h1>🔒 Política de Privacidad</h1>
+        <div class="subtitle">Última actualización: junio 2026</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Columna principal -->
+    <div class="col-lg-8">
+
+        <div class="privacy-card fade-up">
+            <div class="privacy-card-header">1. Introducción</div>
+            <div class="privacy-card-body">
+                <p>En <strong>CitasApp</strong> nos comprometemos a proteger la privacidad y la seguridad de la información personal de nuestros usuarios. Esta política describe qué datos recopilamos, cómo los utilizamos y cuáles son sus derechos como titular de esos datos.</p>
+                <p class="mb-0">Al utilizar esta aplicación, usted acepta las prácticas descritas en el presente documento. Si tiene alguna duda, puede contactarnos a través de los medios indicados al final de esta página.</p>
+            </div>
+        </div>
+
+        <div class="privacy-card fade-up fade-up-1">
+            <div class="privacy-card-header">2. Datos que recopilamos</div>
+            <div class="privacy-card-body">
+                <p>CitasApp almacena únicamente la información necesaria para gestionar el sistema de citas:</p>
+                <ul class="ps-3">
+                    <li><strong>Pacientes:</strong> nombre, apellido, correo electrónico y teléfono de contacto.</li>
+                    <li><strong>Médicos:</strong> nombre, apellido, especialidad y número de licencia profesional.</li>
+                    <li><strong>Citas:</strong> fecha, hora, motivo de consulta y estado de la cita.</li>
+                </ul>
+                <p class="mb-0">No recopilamos datos sensibles como historial clínico, diagnósticos, ni información de pago.</p>
+            </div>
+        </div>
+
+        <div class="privacy-card fade-up fade-up-2">
+            <div class="privacy-card-header">3. Uso de la información</div>
+            <div class="privacy-card-body">
+                <p>Los datos recopilados se utilizan exclusivamente para:</p>
+                <ul class="ps-3">
+                    <li>Gestionar y organizar la agenda de citas médicas.</li>
+                    <li>Identificar correctamente a pacientes y médicos dentro del sistema.</li>
+                    <li>Generar listados y reportes internos de la clínica o consultorio.</li>
+                </ul>
+                <p class="mb-0"><strong>No compartimos, vendemos ni cedemos sus datos a terceros</strong> bajo ninguna circunstancia.</p>
+            </div>
+        </div>
+
+        <div class="privacy-card fade-up fade-up-3">
+            <div class="privacy-card-header">4. Almacenamiento y seguridad</div>
+            <div class="privacy-card-body">
+                <p>La información es almacenada en archivos <strong>JSON locales</strong> dentro del servidor donde se hospeda la aplicación. Se recomienda que el administrador del sistema:</p>
+                <ul class="ps-3">
+                    <li>Restrinja el acceso al servidor únicamente a personal autorizado.</li>
+                    <li>Realice copias de seguridad periódicas de los archivos de datos.</li>
+                    <li>Mantenga el sistema operativo y el framework actualizados.</li>
+                </ul>
+                <p class="mb-0">CitasApp no implementa cifrado de datos en su versión actual; se recomienda usar HTTPS en el despliegue en producción.</p>
+            </div>
+        </div>
+
+        <div class="privacy-card fade-up fade-up-4">
+            <div class="privacy-card-header">5. Derechos del usuario</div>
+            <div class="privacy-card-body">
+                <p>De conformidad con las leyes de protección de datos aplicables, usted tiene derecho a:</p>
+                <div class="rights-grid">
+                    <div class="rights-item">
+                        <strong>📋 Acceso</strong>
+                        Solicitar una copia de sus datos almacenados.
+                    </div>
+                    <div class="rights-item">
+                        <strong>✏️ Rectificación</strong>
+                        Corregir datos inexactos o incompletos.
+                    </div>
+                    <div class="rights-item">
+                        <strong>🗑️ Supresión</strong>
+                        Solicitar la eliminación de sus datos.
+                    </div>
+                    <div class="rights-item">
+                        <strong>🚫 Oposición</strong>
+                        Oponerse al tratamiento de sus datos.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="privacy-card fade-up">
+            <div class="privacy-card-header">6. Cambios a esta política</div>
+            <div class="privacy-card-body">
+                <p class="mb-0">Nos reservamos el derecho de actualizar esta política de privacidad. Cualquier cambio será publicado en esta página con la fecha de actualización correspondiente. Le recomendamos revisarla periódicamente.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna lateral -->
+    <div class="col-lg-4">
+        <div class="right-card fade-up fade-up-1">
+            <div class="right-card-header">📬 Contacto</div>
+            <div class="right-card-body">
+                <p>Para ejercer sus derechos o resolver dudas sobre esta política, contáctenos:</p>
+                <div class="mb-2"><strong>📧 Email</strong><br>privacidad@citasapp.mx</div>
+                <div class="mb-2"><strong>📞 Teléfono</strong><br>+52 (999) 123-4567</div>
+                <div><strong>🕐 Horario</strong><br>Lunes a viernes, 9:00 – 18:00 hrs</div>
+            </div>
+        </div>
+
+        <div class="right-card fade-up fade-up-2">
+            <div class="right-card-header">⚡ Resumen rápido</div>
+            <div class="right-card-body">
+                <ul class="quick-list">
+                    <li>✅ Solo datos necesarios</li>
+                    <li>✅ Sin venta a terceros</li>
+                    <li>✅ Almacenamiento local</li>
+                    <li>✅ Derechos ARCO garantizados</li>
+                    <li>✅ Comunicación transparente</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

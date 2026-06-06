@@ -1,4 +1,7 @@
 ﻿@model CitasApp.Models.Medico
+@section Styles {
+    <link rel="stylesheet" href="~/css/Medico.css" asp-append-version="true" />
+}
 <h1>@Model.Nombre @Model.Apellido</h1>
 <p><strong>Especialidad:</strong> @Model.Especialidad</p>
 <p><strong>Número de licencia:</strong> @Model.NumeroLicencia</p>

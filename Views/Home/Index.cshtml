@@ -1,8 +1,103 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/Home.css" asp-append-version="true" />
+}
+
+<!-- Accesos rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3 fade-up fade-up-1">
+        <a asp-controller="Paciente" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon">👤</div>
+                <div>
+                    <div class="stat-label">Módulo</div>
+                    <div class="stat-num">Pacientes</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3 fade-up fade-up-2">
+        <a asp-controller="Medico" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card accent-cyan">
+                <div class="stat-icon">🩺</div>
+                <div>
+                    <div class="stat-label">Módulo</div>
+                    <div class="stat-num">Médicos</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3 fade-up fade-up-3">
+        <a asp-controller="Cita" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card accent-green">
+                <div class="stat-icon">📅</div>
+                <div>
+                    <div class="stat-label">Módulo</div>
+                    <div class="stat-num">Agenda</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3 fade-up fade-up-4">
+        <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none">
+            <div class="stat-card accent-orange">
+                <div class="stat-icon">🔒</div>
+                <div>
+                    <div class="stat-label">Información</div>
+                    <div class="stat-num">Privacidad</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ¿Qué es CitasApp? -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 fade-up">
+        <div class="info-card">
+            <div class="card-header">¿Qué es CitasApp?</div>
+            <div class="card-body">
+                <p>CitasApp es una aplicación web desarrollada con <strong>ASP.NET Core MVC</strong> para la gestión centralizada de citas médicas. Permite a clínicas y consultorios llevar un control ordenado de sus pacientes, especialistas y agenda diaria.</p>
+                <p class="mb-0">La información se almacena en archivos <strong>JSON</strong> locales, haciendo el sistema ligero y fácil de desplegar sin necesidad de un gestor de base de datos externo.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 fade-up fade-up-1">
+        <div class="info-card">
+            <div class="card-header">Funcionalidades principales</div>
+            <div class="card-body">
+                <ul class="mb-0 ps-3">
+                    <li>Consulta el listado completo de <strong>pacientes registrados</strong></li>
+                    <li>Visualiza el directorio de <strong>médicos y especialidades</strong></li>
+                    <li>Revisa la <strong>agenda de citas</strong> con fecha, hora y estado</li>
+                    <li>Filtra citas <strong>por paciente</strong> de forma rápida</li>
+                    <li>Interfaz responsiva, accesible desde cualquier dispositivo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tecnología -->
+<div class="info-card fade-up">
+    <div class="card-header">Tecnología utilizada</div>
+    <div class="card-body">
+        <div class="tech-grid">
+            <div class="tech-item tech-blue">
+                <div class="tech-name">ASP.NET Core</div>
+            </div>
+            <div class="tech-item tech-yellow">
+                <div class="tech-name">JSON</div>
+            </div>
+            <div class="tech-item tech-purple">
+                <div class="tech-name">Bootstrap 5</div>
+            </div>
+            <div class="tech-item tech-green">
+                <div class="tech-name">Razor Views</div>
+            </div>
+        </div>
+    </div>
 </div>
