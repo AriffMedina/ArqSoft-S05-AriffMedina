@@ -9,13 +9,14 @@
 
 # 🏥 CitasApp
 
-Sistema de gestión de citas médicas desarrollado con ASP.NET Core MVC. Permite administrar pacientes, médicos y agenda de citas desde una interfaz web limpia, sin necesidad de una base de datos externa.
+Sistema de gestión de citas médicas desarrollado con ASP.NET Core MVC siguiendo una **arquitectura hexagonal multiproyecto**. Permite administrar pacientes, médicos y agenda de citas desde una interfaz web limpia, sin necesidad de una base de datos externa.
 
 ---
 
 ## Tabla de contenidos
 
 - [Descripción general](#descripción-general)
+- [Arquitectura hexagonal](#arquitectura-hexagonal)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Funcionamiento básico](#funcionamiento-básico)
 - [Sistema de estilos CSS](#sistema-de-estilos-css)
@@ -28,9 +29,56 @@ Sistema de gestión de citas médicas desarrollado con ASP.NET Core MVC. Permite
 
 ## Descripción general
 
-CitasApp es una aplicación web construida con el patrón MVC de ASP.NET Core. La persistencia de datos se maneja a través de archivos JSON locales en lugar de un gestor de base de datos, lo que hace que el sistema sea sencillo de desplegar y de mantener.
+CitasApp es una aplicación web construida con ASP.NET Core MVC organizada en tres proyectos independientes siguiendo el patrón de arquitectura hexagonal (también conocido como Ports & Adapters). La persistencia de datos se maneja a través de archivos JSON locales, lo que hace que el sistema sea sencillo de desplegar y de mantener.
 
 La aplicación cubre tres módulos principales: gestión de pacientes, directorio de médicos y una agenda de citas que relaciona ambos.
+
+---
+
+## Arquitectura hexagonal
+
+La arquitectura hexagonal separa la lógica de negocio del mundo exterior mediante **puertos** (interfaces) y **adaptadores** (implementaciones concretas). Esto permite que el núcleo de la aplicación sea completamente independiente de la tecnología de persistencia o de presentación utilizada.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   CitasApp.Web                      │
+│         (Adaptador de entrada — HTTP/MVC)           │
+│   Controllers · Views · wwwroot · Program.cs        │
+└───────────────────────┬─────────────────────────────┘
+                        │ usa interfaces de
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  CitasApp.Domain                    │
+│            (Núcleo — lógica de negocio)             │
+│        Interfaces (puertos) · Models · DTOs         │
+└───────────────────────┬─────────────────────────────┘
+                        │ implementado por
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│              CitasApp.Infraestructure               │
+│       (Adaptador de salida — persistencia JSON)     │
+│   JsonCitaRepository · JsonMedicoRepository         │
+│   JsonPacienteRepository                           │
+└─────────────────────────────────────────────────────┘
+```
+
+### Responsabilidad de cada proyecto
+
+| Proyecto | Capa | Responsabilidad |
+|---|---|---|
+| `CitasApp.Domain` | Núcleo | Define los modelos y las interfaces (puertos). No depende de ningún otro proyecto. |
+| `CitasApp.Infraestructure` | Adaptador de salida | Implementa las interfaces del dominio usando archivos JSON como mecanismo de persistencia. |
+| `CitasApp.Web` | Adaptador de entrada | Expone la aplicación vía HTTP. Recibe peticiones, llama al dominio y devuelve vistas Razor. |
+
+### Flujo de dependencias
+
+Las dependencias siempre apuntan **hacia el núcleo**, nunca al revés:
+
+- `CitasApp.Web` → `CitasApp.Domain`
+- `CitasApp.Infraestructure` → `CitasApp.Domain`
+- `CitasApp.Domain` → *(sin dependencias externas)*
+
+Esto garantiza que el dominio pueda probarse de forma aislada y que la infraestructura pueda reemplazarse (por ejemplo, cambiar JSON por una base de datos SQL) sin tocar ni el dominio ni la capa web.
 
 ---
 
@@ -39,74 +87,75 @@ La aplicación cubre tres módulos principales: gestión de pacientes, directori
 ```
 CitasApp/
 │
-├── Controllers/
-│   ├── HomeController.cs          # Inicio y política de privacidad
-│   ├── PacienteController.cs      # Listado y detalle de pacientes
-│   ├── MedicoController.cs        # Listado y detalle de médicos
-│   └── CitaController.cs          # Agenda general y filtro por paciente
+├── CitasApp.Domain/                    # Núcleo de la aplicación
+│   ├── Interfaces/
+│   │   ├── IPacienteRepository.cs      # Puerto de salida para pacientes
+│   │   ├── IMedicoRepository.cs        # Puerto de salida para médicos
+│   │   └── ICitaRepository.cs          # Puerto de salida para citas
+│   └── Models/
+│       ├── Paciente.cs                 # Id, Nombre, Apellido, Email, Telefono
+│       ├── Medico.cs                   # Id, Nombre, Apellido, Especialidad, NumeroLicencia
+│       ├── Cita.cs                     # Id, PacienteId, MedicoId, Fecha, Hora, Motivo, Estado
+│       └── CitaJson.cs                 # Modelo auxiliar para deserialización JSON
 │
-├── Models/
-│   ├── Paciente.cs                # Id, Nombre, Apellido, Email, Telefono
-│   ├── Medico.cs                  # Id, Nombre, Apellido, Especialidad, NumeroLicencia
-│   ├── Cita.cs                    # Id, PacienteId, MedicoId, Fecha, Hora, Motivo, Estado
-│   ├── CitaJson.cs                # Modelo auxiliar para deserialización JSON
-│   └── ErrorViewModel.cs
+├── CitasApp.Infraestructure/           # Adaptadores de salida (persistencia)
+│   └── Repositories/
+│       ├── JsonPacienteRepository.cs   # Implementa IPacienteRepository — lee pacientes.json
+│       ├── JsonMedicoRepository.cs     # Implementa IMedicoRepository — lee medicos.json
+│       └── JsonCitaRepository.cs       # Implementa ICitaRepository — lee citas.json
 │
-├── Interfaces/
-│   ├── IPacienteRepository.cs
-│   ├── IMedicoRepository.cs
-│   └── ICitaRepository.cs
-│
-├── Repositories/
-│   ├── JsonPacienteRepository.cs  # Lee pacientes.json
-│   ├── JsonMedicoRepository.cs    # Lee medicos.json
-│   └── JsonCitaRepository.cs      # Lee citas.json
-│
-├── Data/
-│   ├── pacientes.json
-│   ├── medicos.json
-│   └── citas.json
-│
-├── Views/
-│   ├── Shared/
-│   │   ├── _Layout.cshtml         # Plantilla base (navbar + footer)
-│   │   └── _Layout.cshtml.css
-│   ├── Home/
-│   │   ├── Index.cshtml           # Dashboard con accesos rápidos
-│   │   └── Privacy.cshtml
-│   ├── Paciente/
-│   │   ├── Index.cshtml           # Tabla de pacientes
-│   │   └── Detalle.cshtml         # Ficha de un paciente
-│   ├── Medico/
-│   │   ├── Index.cshtml           # Tabla de médicos
-│   │   └── Detalle.cshtml         # Ficha de un médico
-│   └── Cita/
-│       ├── Index.cshtml           # Agenda completa de citas
-│       └── PorPaciente.cshtml     # Citas filtradas por paciente
-│
-├── wwwroot/
-│   ├── css/
-│   │   ├── site.css               # Estilos base de Bootstrap y globales
-│   │   ├── Layout.css             # Navbar, footer, variables de color, animaciones
-│   │   ├── Home.css               # Tarjetas del dashboard y tech grid
-│   │   ├── Medico.css             # Tabla y detalle de médicos
-│   │   ├── Paciente.css           # Tabla y detalle de pacientes
-│   │   └── Cita.css               # Agenda de citas y badge de estado
-│   ├── js/
-│   │   └── site.js
-│   └── lib/
-│   |   ├── bootstrap/
-│   |   └── jquery/
-│   └── assets/
-│       ├── home.jpeg
-│       ├── pacientes.jpeg
-│       ├── medicos.jpeg
-│       ├── citas-por-paciente.jpeg
-│       ├── citas.jpeg
-│
-├── Program.cs
-├── CitasApp.csproj
-└── appsettings.json
+└── CitasApp.Web/                       # Adaptador de entrada (HTTP/MVC)
+    ├── Controllers/
+    │   ├── HomeController.cs           # Inicio y política de privacidad
+    │   ├── PacienteController.cs       # Listado y detalle de pacientes
+    │   ├── MedicoController.cs         # Listado y detalle de médicos
+    │   └── CitaController.cs           # Agenda general y filtro por paciente
+    │
+    ├── Data/
+    │   ├── pacientes.json
+    │   ├── medicos.json
+    │   └── citas.json
+    │
+    ├── Views/
+    │   ├── Shared/
+    │   │   ├── _Layout.cshtml          # Plantilla base (navbar + footer)
+    │   │   └── _Layout.cshtml.css
+    │   ├── Home/
+    │   │   ├── Index.cshtml            # Dashboard con accesos rápidos
+    │   │   └── Privacy.cshtml
+    │   ├── Paciente/
+    │   │   ├── Index.cshtml            # Tabla de pacientes
+    │   │   └── Detalle.cshtml          # Ficha de un paciente
+    │   ├── Medico/
+    │   │   ├── Index.cshtml            # Tabla de médicos
+    │   │   └── Detalle.cshtml          # Ficha de un médico
+    │   └── Cita/
+    │       ├── Index.cshtml            # Agenda completa de citas
+    │       └── PorPaciente.cshtml      # Citas filtradas por paciente
+    │
+    ├── wwwroot/
+    │   ├── css/
+    │   │   ├── site.css                # Estilos base de Bootstrap y globales
+    │   │   ├── Layout.css              # Navbar, footer, variables de color, animaciones
+    │   │   ├── Home.css                # Tarjetas del dashboard y tech grid
+    │   │   ├── Medico.css              # Tabla y detalle de médicos
+    │   │   ├── Paciente.css            # Tabla y detalle de pacientes
+    │   │   └── Cita.css                # Agenda de citas y badge de estado
+    │   ├── js/
+    │   │   └── site.js
+    │   ├── lib/
+    │   │   ├── bootstrap/
+    │   │   └── jquery/
+    │   └── assets/
+    │       ├── home.jpeg
+    │       ├── pacientes.jpeg
+    │       ├── medicos.jpeg
+    │       ├── citas-por-paciente.jpeg
+    │       └── citas.jpeg
+    │
+    ├── Program.cs
+    ├── CitasApp.Web.csproj
+    └── appsettings.json
 ```
 
 ---
@@ -133,7 +182,7 @@ Desde la ficha de un paciente también se puede acceder a `/Cita/PorPaciente/{id
 
 ### Flujo de datos
 
-Cada controlador recibe su repositorio correspondiente por inyección de dependencias, según lo configurado en `Program.cs`. Los repositorios leen los archivos JSON en la carpeta `Data/` y devuelven listas de modelos fuertemente tipados. No hay escritura en ningún momento: la aplicación es solo de lectura.
+Cada controlador recibe su repositorio correspondiente por inyección de dependencias, según lo configurado en `Program.cs`. Los repositorios (definidos en `CitasApp.Infraestructure`) implementan las interfaces del dominio (`CitasApp.Domain`) y leen los archivos JSON de la carpeta `Data/`. No hay escritura en ningún momento: la aplicación es solo de lectura.
 
 ---
 
@@ -193,13 +242,11 @@ Similar a los anteriores en la tabla. La columna de estado se muestra como un ba
 
 ![Citas filtradas por paciente](wwwroot/assets/citas-por-paciente.jpeg)
 
-> Para agregar las capturas: ejecuta el proyecto, toma capturas de cada vista y guárdalas en `docs/screenshots/` con los nombres indicados arriba.
-
 ---
 
 ## Requisitos
 
-- .NET 8 SDK o superior
+- .NET 10 SDK o superior
 - Navegador moderno (Chrome, Firefox, Edge)
 - No se requiere instalar ni configurar ninguna base de datos
 
@@ -209,17 +256,17 @@ Similar a los anteriores en la tabla. La columna de estado se muestra como un ba
 
 1. Clona o descarga el repositorio.
 
-2. Abre una terminal en la carpeta raíz del proyecto (donde está el archivo `.csproj`).
+2. Abre una terminal en la carpeta raíz de la solución (donde está el archivo `.slnx`).
 
-3. Restaura las dependencias y ejecuta:
+3. Restaura las dependencias y ejecuta el proyecto web:
 
 ```bash
-dotnet run
+dotnet run --project CitasApp.Web
 ```
 
 4. Abre el navegador en la dirección que aparezca en la terminal, normalmente `https://localhost:5001` o `http://localhost:5000`.
 
-5. La aplicación carga los datos desde los archivos en `Data/`. Si quieres agregar o modificar registros, edita directamente los archivos `pacientes.json`, `medicos.json` o `citas.json` y reinicia el servidor.
+5. La aplicación carga los datos desde los archivos en `CitasApp.Web/Data/`. Si quieres agregar o modificar registros, edita directamente los archivos `pacientes.json`, `medicos.json` o `citas.json` y reinicia el servidor.
 
 ---
 
@@ -229,15 +276,15 @@ Una parte del código de este proyecto fue generada con el apoyo de herramientas
 
 Los archivos afectados son:
 
-- `wwwroot/css/Layout.css`
-- `wwwroot/css/Home.css`
-- `wwwroot/css/Medico.css`
-- `wwwroot/css/Paciente.css`
-- `wwwroot/css/Cita.css`
+- `CitasApp.Web/wwwroot/css/Layout.css`
+- `CitasApp.Web/wwwroot/css/Home.css`
+- `CitasApp.Web/wwwroot/css/Medico.css`
+- `CitasApp.Web/wwwroot/css/Paciente.css`
+- `CitasApp.Web/wwwroot/css/Cita.css`
 
 Estos archivos fueron generados con asistencia de Claude (Anthropic) a partir de las vistas Razor existentes y una referencia visual de estilo. El resultado fue revisado y aceptado como parte del proyecto.
 
-El resto del proyecto —controladores, modelos, repositorios, vistas y configuración— fue desarrollado de forma manual por mi.
+El resto del proyecto —controladores, modelos, repositorios, interfaces, vistas y configuración— fue desarrollado de forma manual por mi.
 
 El uso de IA en este contexto tuvo como objetivo agilizar la parte de estilización, que no es el foco principal de la materia, permitiendo dedicar más tiempo al diseño arquitectónico y la lógica de la aplicación.
 
