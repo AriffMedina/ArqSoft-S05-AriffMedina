@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CitasApp.Domain\CitasApp.Domain.csproj" />
     <ProjectReference Include="..\CitasApp.Infraestructure\CitasApp.Infraestructure.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
