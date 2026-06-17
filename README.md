@@ -11,6 +11,8 @@
 
 Sistema de gestión de citas médicas desarrollado con ASP.NET Core MVC siguiendo una **arquitectura hexagonal multiproyecto**. Permite administrar pacientes, médicos y agenda de citas desde una interfaz web limpia, sin necesidad de una base de datos externa.
 
+Ahora con gestion de calculadora y api para cita, pacientes y medicos.
+
 ---
 
 ## Tabla de contenidos
