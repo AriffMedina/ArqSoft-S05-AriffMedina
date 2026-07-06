@@ -1,0 +1,30 @@
+[
+  {
+    "Id": 1,
+    "Nombre": "Carlos",
+    "Apellido": "Reyes",
+    "Especialidad": "Medicina General",
+    "NumeroLicencia": "MG-10421"
+  },
+  {
+    "Id": 2,
+    "Nombre": "Patricia",
+    "Apellido": "Vega",
+    "Especialidad": "Pediatría",
+    "NumeroLicencia": "PD-20835"
+  },
+  {
+    "Id": 3,
+    "Nombre": "Roberto",
+    "Apellido": "Sánchez",
+    "Especialidad": "Cardiología",
+    "NumeroLicencia": "CA-30117"
+  },
+  {
+    "Id": 4,
+    "Nombre": "Jorge",
+    "Apellido": "Pedrozo",
+    "Especialidad": "Fisicoquímica",
+    "NumeroLicencia": "FQ-90289"
+  }
+]
