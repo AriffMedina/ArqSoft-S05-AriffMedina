@@ -22,6 +22,7 @@ Sistema de gestión de citas médicas desarrollado con ASP.NET Core MVC siguiend
 - [Funcionamiento básico](#funcionamiento-básico)
 - [Sistema de estilos CSS](#sistema-de-estilos-css)
 - [Vistas previas](#vistas-previas)
+- [Diagramas C4](#diagramas-c4)
 - [Requisitos](#requisitos)
 - [Cómo ejecutar el proyecto](#cómo-ejecutar-el-proyecto)
 - [Cláusula de uso de inteligencia artificial](#cláusula-de-uso-de-inteligencia-artificial)
@@ -300,6 +301,13 @@ Similar a los anteriores en la tabla. La columna de estado se muestra como un ba
 ![Citas filtradas por paciente](wwwroot/assets/citas-por-paciente.jpeg)
 
 ---
+
+## Diagramas C4
+Para una comprensión detallada de la arquitectura del sistema, puedes ver las vistas C4 en el siguiente enlace, donde se describen los niveles de contexto, contenedores y componentes que conforman nuestra estructura actual.
+[Ver diagramas C4](Docs/DiagramaC4-Nivel_1-3.md)
+
+---
+
 
 ## Requisitos
 
