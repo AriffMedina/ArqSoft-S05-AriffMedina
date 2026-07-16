@@ -1,366 +1,128 @@
-## 👨‍💻 Información del Estudiante
+# ADR-01: Deuda técnica en el composition root — connection string hardcodeado y Program.cs como God File
 
-- **Nombre:** Ariff Medina
-- **Matrícula:** SW2509006
-- **Grupo:** A
-- **Cuatrimestre:** Tercer Cuatrimestre
-- **Carrera:** TSU en Desarrollo e Innovación de Software
-- **Profesor:** Jorge Javier Pedrozo Romero
-
-# 🏥 CitasApp
-
-Sistema de gestión de citas médicas desarrollado con ASP.NET Core MVC siguiendo una **arquitectura hexagonal multiproyecto**. Permite administrar pacientes, médicos y agenda de citas desde una interfaz web limpia, sin necesidad de una base de datos externa.
+| Campo  | Valor |
+|--------|-------|
+| Autor  | Ariff Medina |
+| Fecha  | 15/07/2026 |
+| Estado | `Aceptado` |
 
 ---
 
-## Tabla de contenidos
+## Contexto
 
-- [Descripción general](#descripción-general)
-- [Arquitectura hexagonal](#arquitectura-hexagonal)
-- [Estructura del proyecto](#estructura-del-proyecto)
-- [Patrones de diseño (GOF)](#patrones-de-diseño-gof)
-- [Funcionamiento básico](#funcionamiento-básico)
-- [Sistema de estilos CSS](#sistema-de-estilos-css)
-- [Vistas previas](#vistas-previas)
-- [Diagramas C4](#diagramas-c4)
-- [Requisitos](#requisitos)
-- [Cómo ejecutar el proyecto](#cómo-ejecutar-el-proyecto)
-- [Cláusula de uso de inteligencia artificial](#cláusula-de-uso-de-inteligencia-artificial)
+Al integrar SQL Server + ASP.NET Core Identity a `CitasApp.Web` para
+persistir el login (sin tocar el resto del dominio, que sigue en JSON), todo
+el registro de servicios se hizo directamente en `Program.cs`, priorizando
+validar rápido que Identity y las migraciones funcionaran. Eso dejó dos code
+smells en el mismo archivo, originados en el mismo evento.
 
----
+## Code smells identificados
 
-## Descripción general
+| # | Code smell | Ubicación | Descripción |
+|---|-----------|-----------|--------------|
+| 1 | Tight Coupling | `CitasApp.Web/Program.cs`, línea del `AddDbContext` | El connection string de SQL Server estaba escrito como literal dentro de `UseSqlServer("Server=(localdb)\\MSSQLLocalDB;...")`, en vez de venir de configuración externa |
+| 2 | Low Cohesion / God File | `CitasApp.Web/Program.cs` completo | El archivo mezclaba registro de `DbContext`, Identity, Razor Pages, MVC, los 3 repositorios de dominio y el pipeline HTTP — más de 40 líneas de configuración sin separación de responsabilidades |
 
-CitasApp es una aplicación web construida con ASP.NET Core MVC organizada en tres proyectos independientes siguiendo el patrón de arquitectura hexagonal (también conocido como Ports & Adapters). La persistencia de datos se maneja a través de archivos JSON locales, lo que hace que el sistema sea sencillo de desplegar y de mantener.
+## ¿Por qué son code smells?
 
-La aplicación cubre tres módulos principales: gestión de pacientes, directorio de médicos y una agenda de citas que relaciona ambos.
+**#1 — Tight Coupling:** un code smell de acoplamiento no es solo entre dos
+clases (como el ejemplo de `EmailSender` visto en clase) — también aplica
+cuando el código se acopla a un **entorno de ejecución**. Aquí, un valor que
+cambia según la máquina (dev, staging, la laptop de otro compañero) quedaba
+"quemado" dentro del código fuente, en vez de vivir en un lugar externo e
+intercambiable. Señal concreta: para correr el proyecto en otra máquina,
+había que **editar y recompilar código**, no solo cambiar configuración.
 
----
+**#2 — Low Cohesion / God File:** es el mismo problema de God Class visto en
+la Semana 11 (una clase que hace de todo), aplicado a nivel de archivo de
+configuración en vez de a nivel de clase de dominio. `Program.cs` no tenía
+una sola razón para cambiar — tenía cinco: si cambiaba la base de datos, si
+cambiaba Identity, si se agregaba un repositorio, si cambiaba el pipeline
+HTTP, todo se editaba en el mismo lugar. Señal concreta: para agregar
+cualquier servicio nuevo había que leer y entender todo el archivo para
+saber dónde insertar la línea sin romper el orden del pipeline.
 
-## Arquitectura hexagonal
+## Cómo se resolvieron
 
-La arquitectura hexagonal separa la lógica de negocio del mundo exterior mediante **puertos** (interfaces) y **adaptadores** (implementaciones concretas). Esto permite que el núcleo de la aplicación sea completamente independiente de la tecnología de persistencia o de presentación utilizada.
-
-```
-┌─────────────────────────────────────────────────────┐
-│                   CitasApp.Web                      │
-│         (Adaptador de entrada — HTTP/MVC)           │
-│   Controllers · Views · wwwroot · Program.cs        │
-└───────────────────────┬─────────────────────────────┘
-                        │ usa interfaces de
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│                  CitasApp.Domain                    │
-│            (Núcleo — lógica de negocio)             │
-│        Interfaces (puertos) · Models · DTOs         │
-└───────────────────────┬─────────────────────────────┘
-                        │ implementado por
-                        ▼
-┌─────────────────────────────────────────────────────┐
-│              CitasApp.Infraestructure               │
-│       (Adaptador de salida — persistencia JSON)     │
-│   JsonCitaRepository · JsonMedicoRepository         │
-│   JsonPacienteRepository                           │
-└─────────────────────────────────────────────────────┘
-```
-
-### Responsabilidad de cada proyecto
-
-| Proyecto | Capa | Responsabilidad |
-|---|---|---|
-| `CitasApp.Domain` | Núcleo | Define los modelos y las interfaces (puertos). No depende de ningún otro proyecto. |
-| `CitasApp.Infraestructure` | Adaptador de salida | Implementa las interfaces del dominio usando archivos JSON como mecanismo de persistencia. |
-| `CitasApp.Web` | Adaptador de entrada | Expone la aplicación vía HTTP. Recibe peticiones, llama al dominio y devuelve vistas Razor. |
-
-### Flujo de dependencias
-
-Las dependencias siempre apuntan **hacia el núcleo**, nunca al revés:
-
-- `CitasApp.Web` → `CitasApp.Domain`
-- `CitasApp.Infraestructure` → `CitasApp.Domain`
-- `CitasApp.Domain` → *(sin dependencias externas)*
-
-Esto garantiza que el dominio pueda probarse de forma aislada y que la infraestructura pueda reemplazarse (por ejemplo, cambiar JSON por una base de datos SQL) sin tocar ni el dominio ni la capa web.
-
----
-
-## Estructura del proyecto
-
-```
-CitasApp/
-│
-├── CitasApp.Domain/                    # Núcleo de la aplicación
-│   ├── Interfaces/
-│   │   ├── IPacienteRepository.cs      # Puerto de salida para pacientes
-│   │   ├── IMedicoRepository.cs        # Puerto de salida para médicos
-│   │   ├── ICitaRepository.cs          # Puerto de salida para citas
-│   │   └── ICitaObserver.cs            # Puerto para observadores de confirmación de citas
-│   └── Models/
-│       ├── Paciente.cs                 # Id, Nombre, Apellido, Email, Telefono
-│       ├── Medico.cs                   # Id, Nombre, Apellido, Especialidad, NumeroLicencia
-│       ├── Cita.cs                     # Id, PacienteId, MedicoId, Fecha, Hora, Motivo, Estado
-│       └── CitaJson.cs                 # Modelo auxiliar para deserialización JSON
-│
-├── CitasApp.Infraestructure/           # Adaptadores de salida (persistencia)
-│   ├── Repositories/
-│   │   ├── JsonPacienteRepository.cs   # Implementa IPacienteRepository — lee pacientes.json
-│   │   ├── JsonMedicoRepository.cs     # Implementa IMedicoRepository — lee medicos.json
-│   │   ├── JsonCitaRepository.cs       # Implementa ICitaRepository — lee citas.json
-│   │   ├── MemoriaPacienteRepository.cs# Implementación en memoria (usada en Production)
-│   │   ├── RepositoryFactory.cs        # Factory — decide qué repositorio de paciente crear
-│   │   └── LoggingPacienteRepository.cs# Decorator — agrega logging a un IPacienteRepository
-│   └── Observers/
-│       ├── SmsObserver.cs              # Observer — simula notificación por SMS
-│       └── EmailObserver.cs            # Observer — simula notificación por correo
-│
-└── CitasApp.Web/                       # Adaptador de entrada (HTTP/MVC)
-    ├── Controllers/
-    │   ├── HomeController.cs           # Inicio y política de privacidad
-    │   ├── PacienteController.cs       # Listado y detalle de pacientes
-    │   ├── MedicoController.cs         # Listado y detalle de médicos
-    │   └── CitaController.cs           # Agenda general y filtro por paciente
-    │
-    ├── Data/
-    │   ├── pacientes.json
-    │   ├── medicos.json
-    │   └── citas.json
-    │
-    ├── Views/
-    │   ├── Shared/
-    │   │   ├── _Layout.cshtml          # Plantilla base (navbar + footer)
-    │   │   └── _Layout.cshtml.css
-    │   ├── Home/
-    │   │   ├── Index.cshtml            # Dashboard con accesos rápidos
-    │   │   └── Privacy.cshtml
-    │   ├── Paciente/
-    │   │   ├── Index.cshtml            # Tabla de pacientes
-    │   │   └── Detalle.cshtml          # Ficha de un paciente
-    │   ├── Medico/
-    │   │   ├── Index.cshtml            # Tabla de médicos
-    │   │   └── Detalle.cshtml          # Ficha de un médico
-    │   └── Cita/
-    │       ├── Index.cshtml            # Agenda completa de citas
-    │       └── PorPaciente.cshtml      # Citas filtradas por paciente
-    │
-    ├── wwwroot/
-    │   ├── css/
-    │   │   ├── site.css                # Estilos base de Bootstrap y globales
-    │   │   ├── Layout.css              # Navbar, footer, variables de color, animaciones
-    │   │   ├── Home.css                # Tarjetas del dashboard y tech grid
-    │   │   ├── Medico.css              # Tabla y detalle de médicos
-    │   │   ├── Paciente.css            # Tabla y detalle de pacientes
-    │   │   └── Cita.css                # Agenda de citas y badge de estado
-    │   ├── js/
-    │   │   └── site.js
-    │   ├── lib/
-    │   │   ├── bootstrap/
-    │   │   └── jquery/
-    │   └── assets/
-    │       ├── home.jpeg
-    │       ├── pacientes.jpeg
-    │       ├── medicos.jpeg
-    │       ├── citas-por-paciente.jpeg
-    │       └── citas.jpeg
-    │
-    ├── Program.cs
-    ├── CitasApp.Web.csproj
-    └── appsettings.json
-```
-
----
-
-## Patrones de diseño (GOF)
-
-### Factory — `RepositoryFactory`
-`CitasApp.Infraestructure/Repositories/RepositoryFactory.cs`
-
-Decide en tiempo de ejecución qué implementación de IPacienteRepository
-crear, según el entorno (`ASPNETCORE_ENVIRONMENT`):
-
-| Entorno | Repositorio creado |
-|---|---|
-| `Development` | `JsonPacienteRepository` |
-| `Production` | `MemoriaPacienteRepository` |
-
-
-### Decorator — `LoggingPacienteRepository`
-`CitasApp.Infraestructure/Repositories/LoggingPacienteRepository.cs`
-
-Envuelve un `IPacienteRepository` existente (típicamente el que devuelve la
-Factory) y agrega logging por consola antes y después de `ObtenerTodos()` y
-`ObtenerPorId(id)`, sin alterar la lógica de lectura original:
+**#1 se resolvió extrayendo el connection string a `appsettings.json`**, leído
+vía `IConfiguration` (Options pattern):
 
 ```csharp
-public class LoggingPacienteRepository : IPacienteRepository
+// appsettings.json
 {
-    private readonly IPacienteRepository _inner;
-
-    public LoggingPacienteRepository(IPacienteRepository inner) => _inner = inner;
-
-    public List<Paciente> ObtenerTodos()
-    {
-        Console.WriteLine("[...] ObtenerTodos — inicio");
-        var resultado = _inner.ObtenerTodos();
-        Console.WriteLine($"[...] ObtenerTodos — {resultado.Count} registros");
-        return resultado;
-    }
-    // ObtenerPorId sigue el mismo patrón
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=CitasAppDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
 }
 ```
 
-### Observer — `ICitaObserver`
+**#2 se resolvió con Extract Class + Extract Method**, dividiendo el registro
+de servicios en 3 extension methods de `IServiceCollection`, cada uno en su
+propio archivo bajo `CitasApp.Web/Extensions/`:
 
-CitasApp.Domain/Interfaces/ICitaObserver.cs
-
-CitasApp.Infraestructure/Observers/SmsObserver.cs
-
-CitasApp.Infraestructure/Observers/EmailObserver.cs
-
----
-
-## Funcionamiento básico
-
-### Inicio
-
-La página principal muestra cuatro accesos rápidos a los módulos disponibles: Pacientes, Médicos, Agenda y Privacidad. También incluye una descripción del sistema y un resumen de las tecnologías utilizadas.
-
-### Pacientes
-
-La ruta `/Paciente` lista todos los pacientes registrados en `pacientes.json`. Cada fila de la tabla tiene un enlace a la ficha individual del paciente, donde se muestran sus datos de contacto y un botón para ver sus citas asociadas.
-
-### Médicos
-
-La ruta `/Medico` muestra el directorio completo de médicos con nombre, apellido y especialidad. Al acceder al detalle de un médico, se agrega su número de licencia profesional.
-
-### Agenda de citas
-
-La ruta `/Cita` presenta todas las citas registradas en `citas.json`. Cada registro incluye fecha, hora, paciente, médico, motivo de consulta y estado. El estado por defecto es `Pendiente`.
-
-Desde la ficha de un paciente también se puede acceder a `/Cita/PorPaciente/{id}`, que filtra únicamente las citas de ese paciente.
-
-### Flujo de datos
-
-Cada controlador recibe su repositorio correspondiente por inyección de dependencias, según lo configurado en `Program.cs`. Los repositorios (definidos en `CitasApp.Infraestructure`) implementan las interfaces del dominio (`CitasApp.Domain`) y leen los archivos JSON de la carpeta `Data/`. No hay escritura en ningún momento: la aplicación es solo de lectura.
-
----
-
-## Sistema de estilos CSS
-
-Los estilos están divididos por vista para mantener el código ordenado. Cada archivo CSS carga únicamente en la vista que lo requiere, usando `@section Styles` en Razor.
-
-### Layout.css
-
-Archivo principal. Define las variables de color en `:root`, la tipografía (Nunito, cargada desde Google Fonts), el navbar fijo con indicador de enlace activo, el footer y la animación de entrada `fade-up`. Todos los demás archivos CSS heredan estas variables.
-
-Variables principales:
-
-| Variable | Valor | Uso |
-|---|---|---|
-| `--blue` | `#2b7fdb` | Color principal de acción |
-| `--blue-dark` | `#1a5fb4` | Hover de botones y encabezados |
-| `--blue-light` | `#e8f2fd` | Fondos de cabeceras y hover de filas |
-| `--blue-mid` | `#bbdaf7` | Bordes y separadores |
-| `--bg` | `#f5f9ff` | Fondo general de la página |
-| `--text` | `#1e2a38` | Texto principal |
-| `--text-muted` | `#6c7a8d` | Texto secundario |
-
-### Home.css
-
-Estilos para las tarjetas de acceso rápido (`stat-card`), las tarjetas informativas (`info-card`) con cabecera azul claro, y los badges de tecnología con colores diferenciados por tipo.
-
-### Medico.css y Paciente.css
-
-Ambos archivos comparten una estructura similar: tabla sin bordes visibles, cabecera con fondo azul claro, filas con hover sutil, y links de "Ver detalle" convertidos en pastillas con transición de color. En `Paciente.css` el botón "Ver sus citas" tiene un estilo más destacado (fondo azul sólido con efecto al hover).
-
-### Cita.css
-
-Similar a los anteriores en la tabla. La columna de estado se muestra como un badge con fondo azul claro para diferenciarse del texto normal.
-
----
-
-## Vistas previas
-
-### Inicio / Dashboard
-
-![Vista de inicio](wwwroot/assets/home.jpeg)
-
-### Pacientes
-
-![Listado de pacientes](wwwroot/assets/pacientes.jpeg)
-
-### Médicos
-
-![Listado de médicos](wwwroot/assets/medicos.jpeg)
-
-### Agenda de citas
-
-![Agenda de citas](wwwroot/assets/citas.jpeg)
-
-### Citas por paciente
-
-![Citas filtradas por paciente](wwwroot/assets/citas-por-paciente.jpeg)
-
----
-
-## Diagramas C4
-Para una comprensión detallada de la arquitectura del sistema, puedes ver las vistas C4 en el siguiente enlace, donde se describen los niveles de contexto, contenedores y componentes que conforman nuestra estructura actual.
-[Ver diagramas C4](Docs/DiagramaC4-Nivel_1-3.md)
-
----
-
-
-## Requisitos
-
-- .NET 10 SDK o superior
-- Navegador moderno (Chrome, Firefox, Edge)
-- No se requiere instalar ni configurar ninguna base de datos
-
----
-
-## Cómo ejecutar el proyecto
-
-1. Clona o descarga el repositorio.
-
-2. Abre una terminal en la carpeta raíz de la solución (donde está el archivo `.slnx`).
-
-3. Restaura las dependencias y ejecuta el proyecto web:
-
-```bash
-dotnet run --project CitasApp.Web
+```
+CitasApp.Web/Extensions/
+├── PersistenceServiceExtensions.cs   → AddPersistence(configuration)
+├── IdentityServiceExtensions.cs      → AddIdentityConfig()
+└── RepositoryServiceExtensions.cs    → AddDomainRepositories()
 ```
 
-4. Abre el navegador en la dirección que aparezca en la terminal, normalmente `https://localhost:5001` o `http://localhost:5000`.
+`Program.cs` quedó como orquestador de ~24 líneas, sin ningún literal de
+conexión y sin mezclar responsabilidades:
 
-5. La aplicación carga los datos desde los archivos en `CitasApp.Web/Data/`. Si quieres agregar o modificar registros, edita directamente los archivos `pacientes.json`, `medicos.json` o `citas.json` y reinicia el servidor.
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddPersistence(builder.Configuration)
+    .AddIdentityConfig()
+    .AddDomainRepositories();
+
+builder.Services.AddRazorPages();
+builder.Services.AddControllersWithViews();
+```
+
+Se dividió en **un archivo por responsabilidad** desde ahora (en vez de una
+sola clase `ServiceCollectionExtensions` con los 3 métodos juntos) para
+evitar que esa clase se vuelva el mismo God File movido de lugar cuando se
+agreguen más responsabilidades — por ejemplo cuando se implementen los roles
+de usuario pendientes.
+
+Ambos fixes se verificaron sin cambiar comportamiento observable: la app
+sigue levantando igual y `/Identity/Account/Register` sigue guardando en
+`AspNetUsers`.
 
 ---
 
-## Cláusula de uso de inteligencia artificial
+## Alternativas consideradas
 
-Una parte del código de este proyecto fue generada con el apoyo de herramientas de inteligencia artificial, específicamente en lo relativo al diseño visual y los archivos CSS.
+| Alternativa | Por qué la descarté |
+|-------------|---------------------|
+| Dejar el connection string hardcodeado permanentemente, ya que el proyecto es académico y corre en una sola máquina | Bloquea que cualquier compañero o el profesor levanten el proyecto sin editar código fuente |
+| Mantener todo el registro de servicios en `Program.cs` porque "no va a crecer mucho más" | El proyecto tiene funcionalidad pendiente confirmada (roles vía `AspNetRoles`) que va a seguir agregando servicios |
+| Resolver las dos deudas en commits separados y en momentos distintos | Ambas vivían en el mismo archivo y se originaron en el mismo evento; separarlas hubiera duplicado la verificación de que el comportamiento no cambió |
+| Una sola clase `ServiceCollectionExtensions` con los 3 métodos juntos, en vez de un archivo por responsabilidad | Resuelve el God File actual pero reintroduce el mismo riesgo un nivel más abajo si esa clase sigue creciendo |
 
-Los archivos afectados son:
+## Consecuencias
 
-- `CitasApp.Web/wwwroot/css/Layout.css`
-- `CitasApp.Web/wwwroot/css/Home.css`
-- `CitasApp.Web/wwwroot/css/Medico.css`
-- `CitasApp.Web/wwwroot/css/Paciente.css`
-- `CitasApp.Web/wwwroot/css/Cita.css`
+**✅ Lo que gano:**
 
-Estos archivos fueron generados con asistencia de Claude (Anthropic) a partir de las vistas Razor existentes y una referencia visual de estilo. El resultado fue revisado y aceptado como parte del proyecto.
+- **Técnica:** el connection string es intercambiable por entorno sin
+  recompilar, y cada responsabilidad de arranque vive en su propio archivo,
+  fácil de ubicar y modificar sin tocar las demás.
+- **Proceso/equipo:** cualquier compañero puede clonar el repo y levantarlo
+  configurando solo su `appsettings.json` local, y un code review de
+  "agregué un repositorio" ahora toca un solo archivo pequeño.
 
-El resto del proyecto —controladores, modelos, repositorios, interfaces, vistas y configuración— fue desarrollado de forma manual por mi.
+**⚠️ Lo que sacrifico o asumo:**
 
-El uso de IA en este contexto tuvo como objetivo agilizar la parte de estilización, que no es el foco principal de la materia, permitiendo dedicar más tiempo al diseño arquitectónico y la lógica de la aplicación.
-
----
-
-<div align="center">
-
-**⭐ Si te gustó este proyecto, dale una estrella ⭐**
-
-Hecho con 💙 por Ariff Medina — 2026
-
-</div>
-
-*CitasApp — Proyecto académico, Arquitectura de Software, 2026.*
+- **Limitación técnica:** `appsettings.json` sigue siendo un archivo
+  versionado en git — para producción real haría falta dar el siguiente paso
+  a User Secrets o variables de entorno. Además, dividir en más archivos
+  agrega indirección: entender el arranque completo ahora requiere abrir 4
+  archivos en vez de uno.
+- **Deuda/riesgo:** si no se mantiene disciplina, cada archivo de
+  `Extensions/` puede volver a crecer hasta convertirse en su propio God File.
+  Propuesta: revisar cada extension method cuando pase de ~15-20 líneas y
+  volver a aplicar Extract Method si hace falta.
+```
