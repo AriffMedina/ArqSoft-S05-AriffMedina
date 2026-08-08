@@ -126,3 +126,5 @@ sigue levantando igual y `/Identity/Account/Register` sigue guardando en
   Propuesta: revisar cada extension method cuando pase de ~15-20 líneas y
   volver a aplicar Extract Method si hace falta.
 ```
+
+Commit refactor
